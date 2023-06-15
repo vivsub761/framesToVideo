@@ -6,3 +6,5 @@ To run the program:
 
 Run the program at command line with the flag "-d (filepath of directory with pages)"
 e.g. python3 framesToVideo.py -d ./inputImages
+
+Do not put a "/" at the end of the input filepath.
