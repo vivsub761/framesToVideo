@@ -7,6 +7,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Python script to convert manga pages to video format")
 parser.add_argument("-d", "--targetDirectory", help="Directory that contains the pages that will be converted to a video")
+parser.add_argument("-f", "--frameTime", help = "Time each frame should stay on screen", default = 3)
 args = parser.parse_args()
 
 # custom sort key to sort the pages correctly(see below for proper format)
@@ -15,9 +16,12 @@ def sortkey(filename):
     while filename[i] != "/":
         i -= 1
     filename = filename[i + 1:]
+
     j = 0
-    while filename[j] != "_":
+    while filename[j] != "_" and filename[j] != ".":
         j += 1
+    if filename[j] == ".":
+        return int(filename[:j])
     num1 = filename[:j]
     while filename[j] != ".":
         j += 1
@@ -31,9 +35,9 @@ for filename in os.listdir(args.targetDirectory):
     pages.append(args.targetDirectory + "/" + filename)
 
 # sort the pages
-# IMPORTANT: pages in the directory MUST be in the form "pageNumber_frameNumber.extension"
+# IMPORTANT: pages in the directory MUST be in the form "pageNumber_frameNumber.extension or chronologicalNumber.extension"
 pages.sort(key = sortkey)
-
+frame_time = int(args.frameTime)
 video_clips = []
 start_time = 0
 for filename in pages:
@@ -42,11 +46,6 @@ for filename in pages:
 
     # create a cv2 image from the file
     image = cv2.imread(filename)
-    # use pytesseract to count the number of characters on the page
-    character_count = len(pytesseract.image_to_string(image))
-    character_count = max(character_count, 1)
-    # Use the character count to adjust the amount of time the frame stays in the video
-    this_frame_time = np.ceil(character_count / 20) + 2
     # fade between frames
     fade_duration = 1
 
@@ -55,13 +54,13 @@ for filename in pages:
         image_clip = image_clip.fadein(fade_duration)
 
     # set frame into video
-    image_clip = image_clip.set_duration(this_frame_time).set_start(start_time)
+    image_clip = image_clip.set_duration(frame_time).set_start(start_time)
     # fade out
     image_clip = image_clip.fadeout(fade_duration)
     # add image clip to video
     video_clips.append(image_clip)
     # change start time to appropriate time for new frame
-    start_time += this_frame_time
+    start_time += frame_time
 
 # concatenate clips into a full video
 final_video = concatenate_videoclips(video_clips, "compose")
