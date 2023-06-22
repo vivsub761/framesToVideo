@@ -1,6 +1,4 @@
-numpy
-os
-cv2
-pytesseract
-moviepy
 argparse
+moviepy
+cv2
+numpy
